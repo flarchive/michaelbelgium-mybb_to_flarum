@@ -1,0 +1,89 @@
+# mybb_to_flarum
+
+This is a [Flarum](https://flarum.org/) extension to migrate data from a mybb forum to a fresh flarum instance.
+
+![image admin section](http://puu.sh/CrA3x.png)
+
+## What can it migrate?
+
+In your admin panel you can choose what to migrate.
+
+* Users (their passwords are ALL reset and they'll have to click "Forgot password?")
+* Categories
+* Forums
+* Posts
+* Groups
+* Avatars
+* Attachments (requires fof/upload)
+* Private messages (requires flarum/messages)
+
+## Installation
+
+__This extension has been tested with MyBB v1.8.39, PHP 8.4 and Flarum v2.0__
+
+Execute this command in the root of your flarum installation: `composer require michaelbelgium/mybb-to-flarum`. Navigate to your admin panel, enable the extension and you get a new link in the admin navigation bar.
+
+## Usage
+you can trigger the migration from the admin panel or the console:
+
+```
+> php flarum migrate-data:from-mybb
+
+Description:
+  Migrates data from an existing mybb forum
+
+Usage:
+  migrate-data:from-mybb [options]
+
+Options:
+      --host=HOST            Host of the mybb database [default: "127.0.0.1"]
+  -u, --user=USER            User of the mybb database
+  -p, --password[=PASSWORD]  Password for the mybb database [default: ""]
+  -d, --db=DB                Name of the mybb database
+      --prefix[=PREFIX]      Prefix of the mybb database tables [default: "mybb_"]
+      --path[=PATH]          Path to the mybb forum (required for avatar and attachment migration) [default: ""]                                                                                        
+      --users                Import users (excluding avatars)
+      --threads-posts        Import posts (excluding soft deleted posts/threads)
+      --groups               Import groups
+      --categories           Import categories
+      --avatars              Import avatars
+      --private-messages     Import private messages (requires flarum/messages)
+      --soft-posts           Import soft deleted posts
+      --soft-threads         Import soft deleted threads
+      --attachments          Import attachments
+      --debug                Enable logging
+  -n, --no-interaction       Do not ask any interactive question
+```
+
+### Example commands
+
+Migrate only users and avatars
+```
+> php flarum migrate-data:from-mybb --host=127.0.0.1 --user=homestead --password=secret --db=mybb --users --avatars --path=../mybb
+```
+
+Migrate everything (excluding avatars and soft deleted posts/threads)
+```
+php flarum migrate-data:from-mybb --host=127.0.0.1 --user=homestead --password=secret --db=mybb --users --groups --threads-posts
+```
+
+Migrate users with threads and posts including soft deleted threads but excluding soft deleted posts
+```
+php flarum migrate-data:from-mybb --host=127.0.0.1 --user=homestead --password=secret --db=mybb --users --threads-posts --soft-threads
+```
+
+Migrate users with their private messages
+```
+php flarum migrate-data:from-mybb --host=127.0.0.1 --user=homestead --password=secret --db=mybb --users --private-messages
+```
+## Important notes
+* If u specify u want to migrate avatars then a path to your <u>MyBB forum is required also.</u>
+* Forums with a redirect hyperlink are skipped. Flarum doesn't support them (yet).
+* A guest who created a MyBB post or thread will appear as a deleted user in Flarum and not specifically a "guest".
+* The core BBcode extension should be enabled too.
+
+### Private messages
+* Private messages are only migrated together with users (`--users`) and require the flarum/messages extension to be enabled.
+* Flarum conversations are always between two users. All private messages between the same two users end up in one conversation, and a MyBB message sent to multiple recipients becomes a separate message in a conversation with each recipient.
+* Private message subjects are not migrated, Flarum conversations don't have one.
+* Drafts, messages in the trash, buddy requests and messages sent to yourself are skipped.
